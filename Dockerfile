@@ -1,10 +1,19 @@
-FROM python:3.10.8-slim-buster
-RUN apt-get update -y && apt-get upgrade -y \
-    && apt-get install -y --no-install-recommends gcc libffi-dev musl-dev ffmpeg aria2 python3-pip \
-    && apt-get clean \
+FROM python:3.11-slim
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       gcc \
+       libffi-dev \
+       ffmpeg \
+       aria2 \
+       build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-COPY . /app/
-WORKDIR /app/
-RUN pip3 install --no-cache-dir --upgrade --requirement requirements.txt
-CMD gunicorn app:app & python3 main.py
+WORKDIR /app
+COPY requirements.txt /app/requirements.txt
+RUN pip3 install --no-cache-dir -r /app/requirements.txt
+COPY . /app
+
+# Run the bot (single foreground process)
+CMD ["python3", "main.py"]
